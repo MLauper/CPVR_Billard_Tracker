@@ -29,7 +29,11 @@ public class BayeredImage extends Image {
     }
 
     private ImagePlus createOrReturnFullSizeRGB() {
-        return null;
+        if (fullSizeRGB != null){
+            return fullSizeRGB;
+        }
+        buildFullSizeRGB();
+        return fullSizeRGB;
     }
 
     private ImagePlus createOrReturnHalfSizeRGB() {
@@ -45,20 +49,27 @@ public class BayeredImage extends Image {
         traverseBayeredPatternHalfSizeRGB();
     }
 
+    private void buildFullSizeRGB() {
+        initializeFullSizeRGB();
+        traverseBayeredPatternFullSizeRGB();
+    }
+
     private void initializeHalfSizeRGB() {
-        halfSizeRGB = NewImage.createRGBImage("RGBDeBayered", (int)Math.floor(originalPictureWidth / 2), (int)Math.floor(originalPictureHeight / 2), 1, NewImage.FILL_BLACK);
+        halfSizeRGB = NewImage.createRGBImage("HallfSizeRGBDebayered", (int)Math.floor(originalPictureWidth / 2), (int)Math.floor(originalPictureHeight / 2), 1, NewImage.FILL_BLACK);
         ImageProcessor ipRGB = halfSizeRGB.getProcessor();
         halfSizePixRGB = (int[]) ipRGB.getPixels();
+    }
+
+    private void initializeFullSizeRGB() {
+        fullSizeRGB = NewImage.createRGBImage("FullfSizeRGBDebayered", originalPictureWidth, originalPictureHeight, 1, NewImage.FILL_BLACK);
+        ImageProcessor ipRGB = fullSizeRGB.getProcessor();
+        fullSizePixRGB = (int[]) ipRGB.getPixels();
     }
 
     private void traverseBayeredPatternHalfSizeRGB(){
         // TODO: Remove magic offset for bayered Pattern
         int originalPositionX = 0;
         int originalPositionY = 1;
-        Point currentPoint;
-        int absolutePosition;
-        int imageHeight = halfSizeRGB.getHeight()-2;
-        int imageWidth = halfSizeRGB.getWidth()-2;
 
         for (int newX = 0; originalPositionX < originalPictureHeight-1; newX++){
             for (int newY = 0; originalPositionY < originalPictureWidth-1; newY++){
@@ -72,8 +83,28 @@ public class BayeredImage extends Image {
         }
     }
 
+    private void traverseBayeredPatternFullSizeRGB() {
+        // TODO: Remove magic offset for bayered Pattern
+
+        for (int x = 0; x < originalPictureHeight-1; x++){
+            for (int y = 1; y < originalPictureWidth-1; y++){
+                Point position = new Point(x,y);
+                int absoultPosition = getAbsolutPixelPosition(position);
+
+                PixelType pixelType = null;
+
+                if (x%2 == 0 && y%2 == 0) pixelType = PixelType.GREEN_TOPRED;
+                if (x%2 == 0 && y%2 == 1) pixelType = PixelType.BLUE;
+                if (x%2 == 1 && y%2 == 0) pixelType = PixelType.RED;
+                if (x%2 == 1 && y%2 == 1) pixelType = PixelType.GREEN_TOPBLUE;
+
+                fullSizePixRGB[absoultPosition] = getFullSizeRGB(new Point(x,y),pixelType);
+            }
+        }
+    }
+
     private int getAverageRGB(Point topLeftPixel){
-        if(hasRightPixel(topLeftPixel) == false || hasBottomPixel(topLeftPixel) == false){
+        if(!hasRightBottomAndBottomRightPixel(topLeftPixel)){
             return 0;
         }
 
@@ -81,15 +112,95 @@ public class BayeredImage extends Image {
         Point bottomLeftPixel = this.getBottomPixel(topLeftPixel);
         Point bottomRightPixel = this.getBottomRightPixel(topLeftPixel);
 
+        byte redPixel = this.getPixelColor(bottomLeftPixel);
         byte greenPixel1 = this.getPixelColor(topLeftPixel);
         byte greenPixel2 = this.getPixelColor(bottomRightPixel);
         byte greenPixel = (byte) (((int)greenPixel1 + (int)greenPixel2) / 2);
         byte bluePixel = this.getPixelColor(topRightPixel);
-        byte redPixel = this.getPixelColor(bottomLeftPixel);
 
-        int pixelColor = ((redPixel & 0xff)<<16)+((greenPixel & 0xff)<<8) + (bluePixel & 0xff);
+        return (convertByteRGBtoIntRGB(redPixel, greenPixel, bluePixel));
+    }
 
-        return (pixelColor);
+    private int getFullSizeRGB(Point point, Image.PixelType pixelType) {
+        byte redPixel = 0;
+        byte greenPixel = 0;
+        byte bluePixel = 0;
+
+        if(isCentricPixel(point)){
+
+            if (pixelType == PixelType.RED){
+                redPixel = (byte) getPixelColor(point);
+                greenPixel = (byte) ((
+                        getPixelColor(getTopPixel(point)) +
+                                getPixelColor(getRightPixel(point)) +
+                                getPixelColor(getBottomPixel(point)) +
+                                getPixelColor(getLeftPixel(point))
+                ) / 4);
+                bluePixel = (byte) ((
+                        getPixelColor(getTopLeftPixel(point)) +
+                                getPixelColor(getTopRightPixel(point)) +
+                                getPixelColor(getBottomLeftPixel(point)) +
+                                getPixelColor(getBottomRightPixel(point))
+                ) / 4);
+            }
+            else if (pixelType == PixelType.GREEN_TOPRED){
+                redPixel = (byte) ((
+                        getPixelColor(getTopPixel(point)) +
+                                getPixelColor(getBottomPixel(point))
+                ) / 2);
+                greenPixel = (byte) getPixelColor(point);
+                bluePixel = (byte) ((
+                        getPixelColor(getLeftPixel(point)) +
+                                getPixelColor(getRightPixel(point))
+                ) / 2);
+            }
+            else if (pixelType == PixelType.GREEN_TOPBLUE) {
+                redPixel = (byte) ((
+                        getPixelColor(getLeftPixel(point)) +
+                                getPixelColor(getRightPixel(point))
+                ) / 2);
+                greenPixel = (byte) getPixelColor(point);
+                bluePixel = (byte) ((
+                        getPixelColor(getTopPixel(point)) +
+                                getPixelColor(getBottomPixel(point))
+                ) / 2);
+            }
+            else if (pixelType == PixelType.BLUE){
+                redPixel = (byte) ((
+                        getPixelColor(getTopLeftPixel(point)) +
+                                getPixelColor(getTopRightPixel(point)) +
+                                getPixelColor(getBottomLeftPixel(point)) +
+                                getPixelColor(getBottomRightPixel(point))
+                ) / 4);
+                greenPixel = (byte) ((
+                        getPixelColor(getTopPixel(point)) +
+                                getPixelColor(getRightPixel(point)) +
+                                getPixelColor(getBottomPixel(point)) +
+                                getPixelColor(getLeftPixel(point))
+                ) / 4);
+                bluePixel = (byte) getPixelColor(point);
+            }
+        }
+        return (convertByteRGBtoIntRGB(redPixel, greenPixel, bluePixel));
+    }
+
+    private boolean isCentricPixel(Point point) {
+        if (hasTopPixel(point) && hasRightPixel(point) && hasBottomPixel(point) && hasLeftPixel(point)){
+            Point topPixel = getTopPixel(point);
+            Point bottomPixel = getBottomPixel(point);
+            if (hasLeftPixel(topPixel) && hasRightPixel(topPixel) && hasLeftPixel(bottomPixel) && hasRightPixel(bottomPixel)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private int convertByteRGBtoIntRGB(byte red, byte green, byte blue) {
+        return ( (red & 0xff)<<16) + ((green & 0xff)<<8) + ((blue & 0xff) );
+    }
+
+    private boolean hasRightBottomAndBottomRightPixel(Point topLeftPixel) {
+        return (hasRightPixel(topLeftPixel) && hasBottomPixel(topLeftPixel) && hasRightPixel(getBottomPixel(topLeftPixel)));
     }
 
     public byte getPixelColor(Point point){

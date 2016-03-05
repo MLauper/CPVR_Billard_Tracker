@@ -24,6 +24,7 @@ public class Billard_Tracker implements PlugInFilter
         //ImagePlus imgGray = bayeredImage.getGrayscaleImage();
 
         ImagePlus imgRGB = bayeredImage.getRGBImage();
+        ImagePlus fullImgRGB = bayeredImage.getRGBImage(Image.DebayerSize.FULL_SIZE);
 
         long msStart = System.currentTimeMillis();
 
@@ -49,6 +50,8 @@ public class Billard_Tracker implements PlugInFilter
         //imgGray.updateAndDraw();
         imgRGB.show();
         imgRGB.updateAndDraw();
+        fullImgRGB.show();
+        fullImgRGB.updateAndDraw();
         //imgHue.show();
         //imgHue.updateAndDraw();
     }
