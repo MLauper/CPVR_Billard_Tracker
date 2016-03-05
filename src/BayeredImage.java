@@ -16,6 +16,12 @@ public class BayeredImage extends Image {
     byte[] imagePixSaturation;
     private ImagePlus brightnessImage;
     byte[] imagePixBrightness;
+    private ImagePlus redImage;
+    private ImagePlus greenImage;
+    private ImagePlus blueImage;
+    private byte[] redImagePixels;
+    private byte[] greenImagePixels;
+    private byte[] blueImagePixels;
 
     public BayeredImage(ImageProcessor imageProcessor) {
         super(imageProcessor);
@@ -262,21 +268,18 @@ public class BayeredImage extends Image {
     }
 
     private void inittializeHueImage() {
-        getRGBImage();
         hueImage = NewImage.createByteImage("HueImage", originalPictureWidth, originalPictureHeight, 1, NewImage.FILL_BLACK);
         ImageProcessor ipHue = hueImage.getProcessor();
         imagePixHue = (byte[]) ipHue.getPixels();
     }
 
     private void initializeSaturationImage() {
-        getRGBImage();
         saturationImage = NewImage.createByteImage("SaturationImage", originalPictureWidth, originalPictureHeight, 1, NewImage.FILL_BLACK);
         ImageProcessor ipSaturation = saturationImage.getProcessor();
         imagePixSaturation = (byte[]) ipSaturation.getPixels();
     }
 
     private void initializeBrightnessImage() {
-        getRGBImage();
         brightnessImage = NewImage.createByteImage("BrightnessImage", originalPictureWidth, originalPictureHeight, 1, NewImage.FILL_BLACK);
         ImageProcessor ipBrightness = brightnessImage.getProcessor();
         imagePixBrightness = (byte[]) ipBrightness.getPixels();
@@ -301,4 +304,76 @@ public class BayeredImage extends Image {
         }
     }
 
+    public ImagePlus getRedImage() {
+        return createOrReturnRedImage();
+    }
+
+    private ImagePlus createOrReturnRedImage() {
+        getRGBImage();
+        if (redImage != null){
+            return redImage;
+        }
+        initializeSingleColorImages();
+        convertRGBtoSingleColors();
+        return redImage;
+    }
+
+    public ImagePlus getGreenImage() {
+        return createOrReturnGreenImage();
+    }
+
+    private ImagePlus createOrReturnGreenImage() {
+        getRGBImage();
+        if (greenImage != null){
+            return greenImage;
+        }
+        initializeSingleColorImages();
+        convertRGBtoSingleColors();
+        return greenImage;
+    }
+
+    public ImagePlus getBlueImage() {
+        return createOrReturnBlueImage();
+    }
+
+    private ImagePlus createOrReturnBlueImage() {
+        getRGBImage();
+        if (blueImage != null){
+            return blueImage;
+        }
+        initializeSingleColorImages();
+        convertRGBtoSingleColors();
+        return blueImage;
+    }
+
+    private void initializeSingleColorImages() {
+        redImage = NewImage.createByteImage("RedImage", originalPictureWidth, originalPictureHeight, 1, NewImage.FILL_BLACK);
+        ImageProcessor ipRed = redImage.getProcessor();
+        redImagePixels = (byte[]) ipRed.getPixels();
+
+        greenImage = NewImage.createByteImage("GreenImage", originalPictureWidth, originalPictureHeight, 1, NewImage.FILL_BLACK);
+        ImageProcessor ipGreen = greenImage.getProcessor();
+        greenImagePixels = (byte[]) ipGreen.getPixels();
+
+        blueImage = NewImage.createByteImage("BlueImage", originalPictureWidth, originalPictureHeight, 1, NewImage.FILL_BLACK);
+        ImageProcessor ipBlue = blueImage.getProcessor();
+        blueImagePixels = (byte[]) ipBlue.getPixels();
+    }
+
+    private void convertRGBtoSingleColors() {
+        for (int x = 0; x < originalPictureHeight-1; x++){
+            for (int y = 1; y < originalPictureWidth-1; y++){
+                Point position = new Point(x,y);
+                int absolutePosition = getAbsolutPixelPosition(position);
+
+                int red = fullSizePixRGB[absolutePosition] >> 16;
+                int green = fullSizePixRGB[absolutePosition] >> 8 & 0xff;
+                int blue = fullSizePixRGB[absolutePosition] & 0xff;
+
+                redImagePixels[absolutePosition] = (byte) red;
+                greenImagePixels[absolutePosition] = (byte) green;
+                blueImagePixels[absolutePosition] = (byte) blue;
+            }
+        }
+    }
 }

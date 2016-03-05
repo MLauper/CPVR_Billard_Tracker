@@ -21,23 +21,31 @@ public class Billard_Tracker implements PlugInFilter
 
         ImagePlus halfSizeRGBImage = bayeredImage.getRGBImage();
         halfSizeRGBImage.show();
-        halfSizeRGBImage.updateAndDraw();
+        //halfSizeRGBImage.updateAndDraw();
 
         ImagePlus fullSizeRGBImage = bayeredImage.getRGBImage(Image.DebayerSize.FULL_SIZE);
         fullSizeRGBImage.show();
-        fullSizeRGBImage.updateAndDraw();
+        //fullSizeRGBImage.updateAndDraw();
 
         ImagePlus hueImage = bayeredImage.getHueImage();
         hueImage.show();
-        hueImage.updateAndDraw();
+        //hueImage.updateAndDraw();
 
         ImagePlus saturationImage = bayeredImage.getSaturationImage();
         saturationImage.show();
-        saturationImage.updateAndDraw();
+        //saturationImage.updateAndDraw();
 
         ImagePlus brightnessImage = bayeredImage.getBrightnessImage();
         brightnessImage.show();
-        brightnessImage.updateAndDraw();
+        //brightnessImage.updateAndDraw()
+        ImagePlus redImage = bayeredImage.getRedImage();
+        redImage.show();
+
+        ImagePlus greenImage = bayeredImage.getGreenImage();
+        greenImage.show();
+
+        ImagePlus blueImage = bayeredImage.getBlueImage();
+        blueImage.show();
 
         PNG_Writer png = new PNG_Writer();
         try {
