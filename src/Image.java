@@ -4,6 +4,9 @@ import java.awt.*;
 
 public class Image {
 
+    public Image() {
+    }
+
     public enum DebayerSize {
         HALF_SIZE, FULL_SIZE
     }

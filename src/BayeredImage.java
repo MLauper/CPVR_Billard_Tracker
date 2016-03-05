@@ -8,8 +8,14 @@ public class BayeredImage extends Image {
 
     private ImagePlus halfSizeRGB;
     private ImagePlus fullSizeRGB;
+    private ImagePlus hueImage;
     int[] halfSizePixRGB;
     int[] fullSizePixRGB;
+    byte[] imagePixHue;
+    private ImagePlus saturationImage;
+    byte[] imagePixSaturation;
+    private ImagePlus brightnessImage;
+    byte[] imagePixBrightness;
 
     public BayeredImage(ImageProcessor imageProcessor) {
         super(imageProcessor);
@@ -89,7 +95,7 @@ public class BayeredImage extends Image {
         for (int x = 0; x < originalPictureHeight-1; x++){
             for (int y = 1; y < originalPictureWidth-1; y++){
                 Point position = new Point(x,y);
-                int absoultPosition = getAbsolutPixelPosition(position);
+                int absolutePosition = getAbsolutPixelPosition(position);
 
                 PixelType pixelType = null;
 
@@ -98,7 +104,7 @@ public class BayeredImage extends Image {
                 if (x%2 == 1 && y%2 == 0) pixelType = PixelType.RED;
                 if (x%2 == 1 && y%2 == 1) pixelType = PixelType.GREEN_TOPBLUE;
 
-                fullSizePixRGB[absoultPosition] = getFullSizeRGB(new Point(x,y),pixelType);
+                fullSizePixRGB[absolutePosition] = getFullSizeRGB(new Point(x,y),pixelType);
             }
         }
     }
@@ -206,6 +212,93 @@ public class BayeredImage extends Image {
     public byte getPixelColor(Point point){
         int absolutePosition = getAbsolutPixelPosition(point);
         return originalPixel[absolutePosition];
+    }
+
+
+    public ImagePlus getHueImage(){
+        return createOrReturnHueImage();
+    }
+
+    private ImagePlus createOrReturnHueImage() {
+        getRGBImage();
+        if (hueImage != null){
+            return hueImage;
+        }
+        buildHSBImages();
+        return hueImage;
+    }
+
+    public ImagePlus getSaturationImage(){
+        return createOrReturnSaturationImage();
+    }
+
+    private ImagePlus createOrReturnSaturationImage() {
+        getRGBImage();
+        if (saturationImage != null){
+            return saturationImage;
+        }
+        buildHSBImages();
+        return saturationImage;
+    }
+
+    public ImagePlus getBrightnessImage(){
+        return createOrReturnBrighnessImage();
+    }
+
+    private ImagePlus createOrReturnBrighnessImage() {
+        getRGBImage();
+        if (brightnessImage != null){
+            return brightnessImage;
+        }
+        buildHSBImages();
+        return brightnessImage;
+    }
+
+    private void buildHSBImages() {
+        inittializeHueImage();
+        initializeSaturationImage();
+        initializeBrightnessImage();
+        convertRGBtoHSB();
+    }
+
+    private void inittializeHueImage() {
+        getRGBImage();
+        hueImage = NewImage.createByteImage("HueImage", originalPictureWidth, originalPictureHeight, 1, NewImage.FILL_BLACK);
+        ImageProcessor ipHue = hueImage.getProcessor();
+        imagePixHue = (byte[]) ipHue.getPixels();
+    }
+
+    private void initializeSaturationImage() {
+        getRGBImage();
+        saturationImage = NewImage.createByteImage("SaturationImage", originalPictureWidth, originalPictureHeight, 1, NewImage.FILL_BLACK);
+        ImageProcessor ipSaturation = saturationImage.getProcessor();
+        imagePixSaturation = (byte[]) ipSaturation.getPixels();
+    }
+
+    private void initializeBrightnessImage() {
+        getRGBImage();
+        brightnessImage = NewImage.createByteImage("BrightnessImage", originalPictureWidth, originalPictureHeight, 1, NewImage.FILL_BLACK);
+        ImageProcessor ipBrightness = brightnessImage.getProcessor();
+        imagePixBrightness = (byte[]) ipBrightness.getPixels();
+    }
+
+    private void convertRGBtoHSB() {
+        for (int x = 0; x < originalPictureHeight-1; x++){
+            for (int y = 1; y < originalPictureWidth-1; y++){
+                Point position = new Point(x,y);
+                int absolutePosition = getAbsolutPixelPosition(position);
+
+                int red = fullSizePixRGB[absolutePosition] >> 16;
+                int green = fullSizePixRGB[absolutePosition] >> 8 & 0xff;
+                int blue = fullSizePixRGB[absolutePosition] & 0xff;
+
+                float[] hsb = Color.RGBtoHSB(red,green,blue,null);
+
+                imagePixHue[absolutePosition] = (byte) (hsb[0]*255);
+                imagePixSaturation[absolutePosition] = (byte) (hsb[1]*255);
+                imagePixBrightness[absolutePosition] = (byte) (hsb[2]*255);
+            }
+        }
     }
 
 }

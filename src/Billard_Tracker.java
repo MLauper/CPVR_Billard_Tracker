@@ -8,7 +8,8 @@ public class Billard_Tracker implements PlugInFilter
 {
     @Override
     public int setup(String arg, ImagePlus imp)
-    {   return DOES_8G;
+    {
+        return DOES_8G;
     }
 
     private BayeredImage bayeredImage;
@@ -18,42 +19,36 @@ public class Billard_Tracker implements PlugInFilter
 
         BayeredImage bayeredImage = new BayeredImage(imageProcessor);
 
-        //ImagePlus imgSample = bayeredImage.getSampleImage();
-        //imgSample.show();
+        ImagePlus halfSizeRGBImage = bayeredImage.getRGBImage();
+        halfSizeRGBImage.show();
+        halfSizeRGBImage.updateAndDraw();
 
-        //ImagePlus imgGray = bayeredImage.getGrayscaleImage();
+        ImagePlus fullSizeRGBImage = bayeredImage.getRGBImage(Image.DebayerSize.FULL_SIZE);
+        fullSizeRGBImage.show();
+        fullSizeRGBImage.updateAndDraw();
 
-        ImagePlus imgRGB = bayeredImage.getRGBImage();
-        ImagePlus fullImgRGB = bayeredImage.getRGBImage(Image.DebayerSize.FULL_SIZE);
+        ImagePlus hueImage = bayeredImage.getHueImage();
+        hueImage.show();
+        hueImage.updateAndDraw();
 
-        long msStart = System.currentTimeMillis();
+        ImagePlus saturationImage = bayeredImage.getSaturationImage();
+        saturationImage.show();
+        saturationImage.updateAndDraw();
 
-        //ImagePlus imgHue = bayeredImage.getHueImage();
-
-        long ms = System.currentTimeMillis() - msStart;
-
-        System.out.println(ms);
-
-        //ImageStatistics stats = ipGray.getStatistics();
-        //System.out.println("Mean:" + stats.mean);
+        ImagePlus brightnessImage = bayeredImage.getBrightnessImage();
+        brightnessImage.show();
+        brightnessImage.updateAndDraw();
 
         PNG_Writer png = new PNG_Writer();
         try {
-            png.writeImage(imgRGB, "./data_out/Billard1024x544x3.png", 0);
-            //png.writeImage(imgHue, "./data_out/Billard1024x544x1H.png", 0);
-            //png.writeImage(imgGray, "./data_out/Billard1024x544x1B.png", 0);
+            png.writeImage(halfSizeRGBImage, "./data_out/Billard1024x544x3.png", 0);
+            png.writeImage(fullSizeRGBImage, "./data_out/Billard2048x1088x3.png", 0);
+            png.writeImage(hueImage, "./data_out/Billard2048x1088_Hue.png", 0);
+            png.writeImage(saturationImage, "./data_out/Billard2048x1088_Saturation.png", 0);
+            png.writeImage(brightnessImage, "./data_out/Billard2048x1088_Brightness.png", 0);
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        //imgGray.show();
-        //imgGray.updateAndDraw();
-        imgRGB.show();
-        imgRGB.updateAndDraw();
-        fullImgRGB.show();
-        fullImgRGB.updateAndDraw();
-        //imgHue.show();
-        //imgHue.updateAndDraw();
     }
     
     public static void main(String[] args)
