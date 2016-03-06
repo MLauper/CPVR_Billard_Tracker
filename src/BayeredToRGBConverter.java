@@ -4,8 +4,12 @@ import ij.process.ImageProcessor;
 
 import java.awt.*;
 
-public class BayeredImage extends Image {
-
+public class BayeredToRGBConverter extends Image {
+    /**
+     * Expects a bayered image.
+     * Supports generation of a half size or full size RGB image.
+     * Multiple algorithms are supported.
+     */
     private ImagePlus halfSizeRGB;
     private ImagePlus fullSizeRGB;
     private ImagePlus hueImage;
@@ -23,7 +27,7 @@ public class BayeredImage extends Image {
     private byte[] greenImagePixels;
     private byte[] blueImagePixels;
 
-    public BayeredImage(ImageProcessor imageProcessor) {
+    public BayeredToRGBConverter(ImageProcessor imageProcessor) {
         super(imageProcessor);
     }
 
@@ -67,13 +71,13 @@ public class BayeredImage extends Image {
     }
 
     private void initializeHalfSizeRGB() {
-        halfSizeRGB = NewImage.createRGBImage("HallfSizeRGBDebayered", (int)Math.floor(originalPictureWidth / 2), (int)Math.floor(originalPictureHeight / 2), 1, NewImage.FILL_BLACK);
+        halfSizeRGB = NewImage.createRGBImage("HallfSizeRGBDebayered", (int)Math.floor(originalImageWidth / 2), (int)Math.floor(originalImageHeight / 2), 1, NewImage.FILL_BLACK);
         ImageProcessor ipRGB = halfSizeRGB.getProcessor();
         halfSizePixRGB = (int[]) ipRGB.getPixels();
     }
 
     private void initializeFullSizeRGB() {
-        fullSizeRGB = NewImage.createRGBImage("FullfSizeRGBDebayered", originalPictureWidth, originalPictureHeight, 1, NewImage.FILL_BLACK);
+        fullSizeRGB = NewImage.createRGBImage("FullfSizeRGBDebayered", originalImageWidth, originalImageHeight, 1, NewImage.FILL_BLACK);
         ImageProcessor ipRGB = fullSizeRGB.getProcessor();
         fullSizePixRGB = (int[]) ipRGB.getPixels();
     }
@@ -83,10 +87,10 @@ public class BayeredImage extends Image {
         int originalPositionX = 0;
         int originalPositionY = 1;
 
-        for (int newX = 0; originalPositionX < originalPictureHeight-1; newX++){
-            for (int newY = 0; originalPositionY < originalPictureWidth-1; newY++){
+        for (int newX = 0; originalPositionX < originalImageHeight -1; newX++){
+            for (int newY = 0; originalPositionY < originalImageWidth -1; newY++){
                 Point newPosition = new Point(newX,newY);
-                int newAbsoultPosition = getAbsolutPixelPosition(newPosition, originalPictureHeight / 2, originalPictureWidth / 2);
+                int newAbsoultPosition = getAbsolutPixelPosition(newPosition, originalImageHeight / 2, originalImageWidth / 2);
                 halfSizePixRGB[newAbsoultPosition] = getAverageRGB(new Point(originalPositionX,originalPositionY));
                 originalPositionY += 2;
             }
@@ -98,8 +102,8 @@ public class BayeredImage extends Image {
     private void traverseBayeredPatternFullSizeRGB() {
         // TODO: Remove magic offset for bayered Pattern
 
-        for (int x = 0; x < originalPictureHeight-1; x++){
-            for (int y = 1; y < originalPictureWidth-1; y++){
+        for (int x = 0; x < originalImageHeight -1; x++){
+            for (int y = 1; y < originalImageWidth -1; y++){
                 Point position = new Point(x,y);
                 int absolutePosition = getAbsolutPixelPosition(position);
 
@@ -268,26 +272,26 @@ public class BayeredImage extends Image {
     }
 
     private void inittializeHueImage() {
-        hueImage = NewImage.createByteImage("HueImage", originalPictureWidth, originalPictureHeight, 1, NewImage.FILL_BLACK);
+        hueImage = NewImage.createByteImage("HueImage", originalImageWidth, originalImageHeight, 1, NewImage.FILL_BLACK);
         ImageProcessor ipHue = hueImage.getProcessor();
         imagePixHue = (byte[]) ipHue.getPixels();
     }
 
     private void initializeSaturationImage() {
-        saturationImage = NewImage.createByteImage("SaturationImage", originalPictureWidth, originalPictureHeight, 1, NewImage.FILL_BLACK);
+        saturationImage = NewImage.createByteImage("SaturationImage", originalImageWidth, originalImageHeight, 1, NewImage.FILL_BLACK);
         ImageProcessor ipSaturation = saturationImage.getProcessor();
         imagePixSaturation = (byte[]) ipSaturation.getPixels();
     }
 
     private void initializeBrightnessImage() {
-        brightnessImage = NewImage.createByteImage("BrightnessImage", originalPictureWidth, originalPictureHeight, 1, NewImage.FILL_BLACK);
+        brightnessImage = NewImage.createByteImage("BrightnessImage", originalImageWidth, originalImageHeight, 1, NewImage.FILL_BLACK);
         ImageProcessor ipBrightness = brightnessImage.getProcessor();
         imagePixBrightness = (byte[]) ipBrightness.getPixels();
     }
 
     private void convertRGBtoHSB() {
-        for (int x = 0; x < originalPictureHeight-1; x++){
-            for (int y = 1; y < originalPictureWidth-1; y++){
+        for (int x = 0; x < originalImageHeight -1; x++){
+            for (int y = 1; y < originalImageWidth -1; y++){
                 Point position = new Point(x,y);
                 int absolutePosition = getAbsolutPixelPosition(position);
 
@@ -305,64 +309,63 @@ public class BayeredImage extends Image {
     }
 
     public ImagePlus getRedImage() {
-        return createOrReturnRedImage();
-    }
-
-    private ImagePlus createOrReturnRedImage() {
-        getRGBImage();
-        if (redImage != null){
-            return redImage;
-        }
-        initializeSingleColorImages();
-        convertRGBtoSingleColors();
-        return redImage;
+        return createOrReturnImage(Channel.RED);
     }
 
     public ImagePlus getGreenImage() {
-        return createOrReturnGreenImage();
-    }
-
-    private ImagePlus createOrReturnGreenImage() {
-        getRGBImage();
-        if (greenImage != null){
-            return greenImage;
-        }
-        initializeSingleColorImages();
-        convertRGBtoSingleColors();
-        return greenImage;
+        return createOrReturnImage(Channel.GREEN);
     }
 
     public ImagePlus getBlueImage() {
-        return createOrReturnBlueImage();
+        return createOrReturnImage(Channel.BLUE);
     }
 
-    private ImagePlus createOrReturnBlueImage() {
+    private ImagePlus createOrReturnImage(Image.Channel color){
         getRGBImage();
-        if (blueImage != null){
+        if (color == Channel.RED){
+            if (redImage != null){
+                return redImage;
+            }
+            initializeSingleColorImages();
+            convertRGBtoSingleColors();
+            return redImage;
+        }
+        else if (color == Channel.GREEN){
+            if (greenImage != null){
+                return greenImage;
+            }
+            initializeSingleColorImages();
+            convertRGBtoSingleColors();
+            return greenImage;
+        }
+        else if (color == Channel.BLUE){
+            if (blueImage != null){
+                return blueImage;
+            }
+            initializeSingleColorImages();
+            convertRGBtoSingleColors();
             return blueImage;
         }
-        initializeSingleColorImages();
-        convertRGBtoSingleColors();
-        return blueImage;
+        return null;
     }
 
     private void initializeSingleColorImages() {
-        redImage = NewImage.createByteImage("RedImage", originalPictureWidth, originalPictureHeight, 1, NewImage.FILL_BLACK);
+        redImage = NewImage.createByteImage("RedImage", originalImageWidth, originalImageHeight, 1, NewImage.FILL_BLACK);
         ImageProcessor ipRed = redImage.getProcessor();
         redImagePixels = (byte[]) ipRed.getPixels();
 
-        greenImage = NewImage.createByteImage("GreenImage", originalPictureWidth, originalPictureHeight, 1, NewImage.FILL_BLACK);
+        greenImage = NewImage.createByteImage("GreenImage", originalImageWidth, originalImageHeight, 1, NewImage.FILL_BLACK);
         ImageProcessor ipGreen = greenImage.getProcessor();
         greenImagePixels = (byte[]) ipGreen.getPixels();
 
-        blueImage = NewImage.createByteImage("BlueImage", originalPictureWidth, originalPictureHeight, 1, NewImage.FILL_BLACK);
+        blueImage = NewImage.createByteImage("BlueImage", originalImageWidth, originalImageHeight, 1, NewImage.FILL_BLACK);
         ImageProcessor ipBlue = blueImage.getProcessor();
         blueImagePixels = (byte[]) ipBlue.getPixels();
     }
 
     private void convertRGBtoSingleColors() {
-        for (int x = 0; x < originalPictureHeight-1; x++){
-            for (int y = 1; y < originalPictureWidth-1; y++){
+        for (int x = 0; x < originalImageHeight -1; x++){
+            for (int y = 1; y < originalImageWidth -1; y++){
                 Point position = new Point(x,y);
                 int absolutePosition = getAbsolutPixelPosition(position);
 

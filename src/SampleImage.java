@@ -10,7 +10,7 @@ public class SampleImage extends Image {
     }
 
     public ImagePlus getSampleImage() {
-        ImagePlus imgSample = NewImage.createByteImage("SampleImage", originalPictureWidth / 2, originalPictureHeight / 2, 1, NewImage.FILL_BLACK);
+        ImagePlus imgSample = NewImage.createByteImage("SampleImage", originalImageWidth / 2, originalImageHeight / 2, 1, NewImage.FILL_BLACK);
         ImageProcessor ipSample = imgSample.getProcessor();
         byte[] pixSample = (byte[]) ipSample.getPixels();
         int w2 = ipSample.getWidth();
@@ -36,10 +36,10 @@ public class SampleImage extends Image {
         int origX = 0;
         int origY = 0;
 
-        for (newX = 0; origX < originalPictureHeight; newX++){
-            for (newY = 0; origY < originalPictureWidth; newY++){
+        for (newX = 0; origX < originalImageHeight; newX++){
+            for (newY = 0; origY < originalImageWidth; newY++){
                 Point newPosition = new Point(newX,newY);
-                int newAbsoultPosition = getAbsolutPixelPosition(newPosition, originalPictureHeight / 2, originalPictureWidth / 2);
+                int newAbsoultPosition = getAbsolutPixelPosition(newPosition, originalImageHeight / 2, originalImageWidth / 2);
 
                 newPixels[newAbsoultPosition] = getGrayscaleFromBayered(new Point(origX,origY));
                 //newPixels[newAbsoultPosition] = (byte)255;
@@ -53,7 +53,7 @@ public class SampleImage extends Image {
     }
 
     public ImagePlus getGrayscaleImage() {
-        ImagePlus imgGray = NewImage.createByteImage("GrayDeBayered", originalPictureWidth / 2, originalPictureHeight / 2, 1, NewImage.FILL_BLACK);
+        ImagePlus imgGray = NewImage.createByteImage("GrayDeBayered", originalImageWidth / 2, originalImageHeight / 2, 1, NewImage.FILL_BLACK);
         ImageProcessor ipGray = imgGray.getProcessor();
         byte[] pixGray = (byte[]) ipGray.getPixels();
         int w2 = ipGray.getWidth();
@@ -66,7 +66,7 @@ public class SampleImage extends Image {
                 // int G1 = originalPixel[i1] & 0xff;
                 // int B = originalPixel[i1+1] & 0xff;
                 int position = y * w2 + x;
-                int origPix = (originalPixel[position * 2] + originalPixel[position * 2 + 1] + originalPixel[position * 2 + y * originalPictureWidth] + originalPixel[position * 2 + y * originalPictureWidth + 1]) / 4;
+                int origPix = (originalPixel[position * 2] + originalPixel[position * 2 + 1] + originalPixel[position * 2 + y * originalImageWidth] + originalPixel[position * 2 + y * originalImageWidth + 1]) / 4;
                 pixGray[position] = (byte) origPix;
             }
 

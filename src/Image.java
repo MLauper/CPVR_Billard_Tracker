@@ -2,10 +2,7 @@ import ij.process.ImageProcessor;
 
 import java.awt.*;
 
-public class Image {
-
-    public Image() {
-    }
+public abstract class Image {
 
     public enum DebayerSize {
         HALF_SIZE, FULL_SIZE
@@ -15,22 +12,25 @@ public class Image {
         RED, GREEN_TOPRED, GREEN_TOPBLUE, BLUE
     }
 
+    protected enum Channel {
+        RED, GREEN, BLUE
+    }
     protected ImageProcessor imageProcessor;
-    protected int originalPictureWidth;
-    protected int originalPictureHeight;
+    protected int originalImageWidth;
+    protected int originalImageHeight;
     protected byte[] originalPixel;
     protected ImageProcessor originalImageProcessor;
 
     public Image(ImageProcessor imageProcessor) {
         this.imageProcessor = imageProcessor;
         originalImageProcessor = imageProcessor;
-        originalPictureWidth = imageProcessor.getWidth();
-        originalPictureHeight = imageProcessor.getHeight();
+        originalImageWidth = imageProcessor.getWidth();
+        originalImageHeight = imageProcessor.getHeight();
         originalPixel = (byte[]) imageProcessor.getPixels();
     }
 
-    public int getAbsolutPixelPosition(Point point){
-        return getAbsolutPixelPosition(point,originalPictureHeight,originalPictureWidth);
+    protected int getAbsolutPixelPosition(Point point){
+        return getAbsolutPixelPosition(point, originalImageHeight, originalImageWidth);
     }
 
 
@@ -39,28 +39,34 @@ public class Image {
     }
 
     protected Point getPointFromAbsoultePosition(int absolutePosition) {
-        return new Point((int) Math.floor(absolutePosition/originalPictureWidth), absolutePosition % originalPictureWidth);
+        return new Point((int) Math.floor(absolutePosition/ originalImageWidth), absolutePosition % originalImageWidth);
     }
 
-    public boolean hasTopPixel (Point point){
-        if (point.getX() == 0){
-            return false;
-        }
-        return true;
+    protected boolean hasTopPixel(Point point){
+        return point.getX() != 0;
     }
 
-    public boolean hasRightPixel (Point point){
-        if (point.getY() == this.originalPictureWidth){
-            return false;
-        }
-        return true;
+    protected boolean hasRightPixel(Point point){
+        return point.getY() != this.originalImageWidth -1;
     }
 
-    public boolean hasBottomPixel (Point point){
-        if (point.getX() == this.originalPictureHeight-1){
-            return false;
+    protected boolean hasBottomPixel(Point point){
+        return point.getX() != this.originalImageHeight -1;
+    }
+
+    protected boolean hasDeltaPixel(Point origin, int deltaX, int deltaY){
+        if (isInXRange((int) (origin.getX()+deltaX)) && isInYRange((int) (origin.getY()+deltaY))){
+            return true;
         }
-        return true;
+        return false;
+    }
+
+    protected boolean isInYRange(int y) {
+        return y >= 0 && y <= (originalImageWidth -1);
+    }
+
+    protected boolean isInXRange(int x) {
+        return x >= 0 && x <= (originalImageHeight -1);
     }
 
     protected Point getTopPixel(Point point){
@@ -71,14 +77,14 @@ public class Image {
     }
 
     protected Point getRightPixel(Point point){
-        if (hasRightPixel(point) == false){
+        if (!hasRightPixel(point)){
             return null;
         }
         return new Point((int)point.getX(), (int)point.getY() + 1);
     }
 
     protected Point getBottomPixel(Point point) {
-        if (hasBottomPixel(point) == false){
+        if (!hasBottomPixel(point)){
             return null;
         }
         return new Point((int)point.getX() + 1, (int)point.getY());
@@ -136,9 +142,6 @@ public class Image {
     }
 
     public boolean hasLeftPixel (Point point){
-        if(point.getY() == 0){
-            return false;
-        }
-        return true;
+        return point.getY() != 0;
     }
 }

@@ -1,5 +1,4 @@
 import ij.ImagePlus;
-import ij.gui.NewImage;
 import ij.plugin.PNG_Writer;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.*;
@@ -12,12 +11,12 @@ public class Billard_Tracker implements PlugInFilter
         return DOES_8G;
     }
 
-    private BayeredImage bayeredImage;
+    private BayeredToRGBConverter bayeredImage;
 
     @Override
     public void run(ImageProcessor imageProcessor) {
 
-        BayeredImage bayeredImage = new BayeredImage(imageProcessor);
+        BayeredToRGBConverter bayeredImage = new BayeredToRGBConverter(imageProcessor);
 
         ImagePlus halfSizeRGBImage = bayeredImage.getRGBImage();
         halfSizeRGBImage.show();
